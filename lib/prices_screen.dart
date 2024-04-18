@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:sql/database_helper.dart'; // Importa la clase DatabaseHelper
+import 'package:sql/database_helper.dart';
 import 'package:sql/crypto_price.dart';
 import 'package:sql/database_screen.dart';
 import 'dart:async';
@@ -54,10 +54,21 @@ class _PricesScreenState extends State<PricesScreen> {
           CryptoPrice(
               name: 'Error',
               imagePath: 'assets/images/error.png',
-              price: 'Error al cargar datos')
+              price: 'Error al cargar datos'),
         ];
       });
     }
+  }
+
+  Future<void> saveAllCryptoPrices() async {
+    // Guarda todas las criptomonedas en la base de datos
+    for (CryptoPrice cryptoPrice in cryptoPrices) {
+      await DatabaseHelper().insertCryptoPrice(cryptoPrice);
+    }
+    // Muestra un mensaje de éxito
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Todas las criptomonedas guardadas exitosamente')),
+    );
   }
 
   @override
@@ -66,6 +77,13 @@ class _PricesScreenState extends State<PricesScreen> {
       appBar: AppBar(
         title: Text('Precios de Criptomonedas'),
         backgroundColor: const Color.fromARGB(255, 49, 49, 50),
+        actions: [
+          // Botón para guardar todas las criptomonedas
+          IconButton(
+            icon: Icon(Icons.save),
+            onPressed: saveAllCryptoPrices,
+          ),
+        ],
       ),
       body: ListView.builder(
         itemCount: cryptoPrices.length,
@@ -86,12 +104,6 @@ class _PricesScreenState extends State<PricesScreen> {
               subtitle: Text(
                 '\$${cryptoPrices[index].price}',
                 style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              trailing: IconButton(
-                icon: Icon(Icons.save),
-                onPressed: () async {
-                  await DatabaseHelper().insertCryptoPrice(cryptoPrices[index]);
-                },
               ),
             ),
           );

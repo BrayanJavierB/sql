@@ -37,6 +37,11 @@ class DatabaseHelper {
     return await db.insert(tableName, cryptoPrice.toMap());
   }
 
+  Future<void> deleteBlockOfCryptoPrices(List<int> ids) async {
+    final db = await database;
+    await db.delete(tableName, where: 'id IN (${ids.join(",")})');
+  }
+
   Future<List<CryptoPrice>> getCryptoPrices() async {
     final db = await database;
     final List<Map<String, dynamic>> cryptoPricesMap =
@@ -50,6 +55,34 @@ class DatabaseHelper {
         price: cryptoPricesMap[index]['price'],
       );
     });
+  }
+
+  Future<List<List<CryptoPrice>>> getCryptoPriceBlocks() async {
+    final db = await database;
+    final List<Map<String, dynamic>> cryptoPricesMap =
+        await db.query(tableName);
+
+    List<List<CryptoPrice>> blocks = [];
+    List<CryptoPrice> currentBlock = [];
+
+    for (int i = 0; i < cryptoPricesMap.length; i++) {
+      final cryptoPrice = CryptoPrice(
+        id: cryptoPricesMap[i]['id'],
+        name: cryptoPricesMap[i]['name'],
+        imagePath: cryptoPricesMap[i]['imagePath'],
+        price: cryptoPricesMap[i]['price'],
+      );
+
+      currentBlock.add(cryptoPrice);
+
+      // Agregar el bloque actual a la lista de bloques cada 4 registros
+      if (currentBlock.length == 4 || i == cryptoPricesMap.length - 1) {
+        blocks.add(List.from(currentBlock));
+        currentBlock.clear();
+      }
+    }
+
+    return blocks;
   }
 
   Future<int> deleteCryptoPrice(int id) async {
